@@ -5,8 +5,10 @@
 #include <QtNetwork>
 #include <QUdpSocket>
 #include <QByteArray>
+#include <QBuffer>
 #include <deque>
 #include <mutex>
+#include "simplecrypt.h"
 
 class chatProtocol : public QObject
 {
