@@ -9,6 +9,7 @@
 #include <deque>
 #include <mutex>
 #include "simplecrypt.h"
+#include <iostream>
 
 class chatProtocol : public QObject
 {
@@ -39,6 +40,17 @@ public:
 public slots:
     void connectToChat();
     void disconnectFromChat();
+    // fakeSignals for tests purposes
+    void fakeSignals(int i, QByteArray id);
+    void sendAck(QByteArray id);
+    void forwardPacket(QByteArray id);
+    void resendPacket(QByteArray id);
+    void sendNextPacket(QByteArray id);
+signals:
+    void ackReceived(QByteArray id);
+    void ourPacketReceived(QByteArray id);
+    void theirPacketReceived(QByteArray id);
+    void ackTimeout(QByteArray id);
 };
 
 #endif // CHATPROTOCOL_H

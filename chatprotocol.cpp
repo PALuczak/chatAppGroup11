@@ -55,7 +55,10 @@ void chatProtocol::readIncomingDatagrams()
 
 chatProtocol::chatProtocol()
 {
-
+    connect(this, SIGNAL(ourPacketReceived(QByteArray)), this, SLOT(sendAck(QByteArray)));
+    connect(this, SIGNAL(theirPacketReceived(QByteArray)), this, SLOT(forwardPacket(QByteArray)));
+    connect(this, SIGNAL(ackTimeout(QByteArray)), this, SLOT(resendPacket(QByteArray)));
+    connect(this, SIGNAL(ackReceived(QByteArray)), this, SLOT(sendNextPacket(QByteArray)));
 }
 
 void chatProtocol::sendPacket(QByteArray packet) // TODO: ensure relaibility
@@ -98,4 +101,35 @@ void chatProtocol::disconnectFromChat()
 {
     disconnect(&commSocket,SIGNAL(readyRead()),this,SLOT(readIncomingDatagrams()));
     this->commSocket.close();
+}
+
+void chatProtocol::fakeSignals(int i, QByteArray id){
+    if(i == 0){
+        emit ackReceived(id);
+    }
+    if(i == 1){
+        emit ourPacketReceived(id);
+    }
+    if(i == 2){
+        emit theirPacketReceived(id);
+    }
+    if(i == 3){
+        emit ackTimeout(id);
+    }
+}
+
+void chatProtocol::sendAck(QByteArray id) {
+    std::cout << "sendAck (from ourPacketReceived signal) with id: "<< id.toHex().constData() << std::endl;
+}
+
+void chatProtocol::forwardPacket(QByteArray id) {
+    std::cout << "forwardPacket (from theirPacketReceived signal) with id: "<< id.toHex().constData() << std::endl;
+}
+
+void chatProtocol::resendPacket(QByteArray id) {
+    std::cout << "resendPacket (from ackTimeout signal) with id: "<< id.toHex().constData() << std::endl;
+}
+
+void chatProtocol::sendNextPacket(QByteArray id) {
+    std::cout << "sendNextPacket (from ackRecevied signal) with id: "<< id.toHex().constData() << std::endl;
 }
