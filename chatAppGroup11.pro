@@ -5,7 +5,7 @@
 #-------------------------------------------------
 
 QT       += core gui
-QT += network
+QT       += network
 CONFIG += c++11
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
@@ -27,9 +27,11 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    chatprotocol.cpp
+	chatprotocol.cpp \
+	simplecrypt.cpp
 
 HEADERS  += mainwindow.h \
-    chatprotocol.h
+	chatprotocol.h \
+	simplecrypt.h
 
 FORMS    += mainwindow.ui
