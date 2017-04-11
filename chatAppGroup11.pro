@@ -28,10 +28,12 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += main.cpp\
         mainwindow.cpp \
 	chatprotocol.cpp \
-	simplecrypt.cpp
+	simplecrypt.cpp \
+    chatpacket.cpp
 
 HEADERS  += mainwindow.h \
 	chatprotocol.h \
-	simplecrypt.h
+	simplecrypt.h \
+    chatpacket.h
 
 FORMS    += mainwindow.ui
