@@ -24,6 +24,7 @@ private:
     void encryptPacket(QByteArray & packet);
     void decryptPacket(QByteArray & packet);
 
+
     QByteArray username;
     std::list<QByteArray> userList;
 private slots:

@@ -1,6 +1,6 @@
 #include "chatprotocol.h"
 
-void chatProtocol::encryptPacket(QByteArray &packet)
+void chatProtocol::encryptPacket(QByteArray & packet)
 {
     // Initialize SimpleCrypt object with hexadecimal key = (0x)40b50fe120bbd01b
     SimpleCrypt crypto(Q_UINT64_C(0x40b50fe120bbd01b));
@@ -23,7 +23,7 @@ void chatProtocol::encryptPacket(QByteArray &packet)
     buffer.close();
 }
 
-void chatProtocol::decryptPacket(QByteArray &packet)
+void chatProtocol::decryptPacket(QByteArray & packet)
 {
     // Initialize SimpleCrypt object with hexadecimal key = (0x)40b50fe120bbd01b
     SimpleCrypt crypto2(Q_UINT64_C(0x40b50fe120bbd01b));
