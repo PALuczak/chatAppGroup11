@@ -47,7 +47,34 @@ void chatProtocol::readIncomingDatagrams()
     QNetworkDatagram incoming = this->commSocket.receiveDatagram();
     QByteArray * incomingData = new(QByteArray);
     *incomingData = incoming.data();
+
+    // send ack back to source address and broadcast the packet to all the connected computers
+    if (*incomingData->destinationName == "broadcast") {
+        for (int i=0; i<receiveBuffer.size(); i++) {
+            //the computer already received the packet before
+            if (receiveBuffer[i]==*incomingData) {
+                return;
+            }
+            //the computer didn't receive the packet before
+            else {
+                this->sendAck(*incomingData);
+                this->sendPacket(*incomingData);
+            }
+        }
+    }
+
+    //send ack back if packet was for this computer
+    else if (*incomingData->destinationName == "username") {
+        this->sendAck(*incomingData);
+    }
+
+    //forward packet to the right destination if it was not a broadcast packet or for this computer
+    else if (*incomingData->destinationName != "username" && *incomingData->destinationName != "broadcast") {
+        this->forwardPacket(&incomingData);
+    }
+
     this->receiveBuffer.push_back(incomingData);
+
     // TODO: check the recipient in the packet and ignore those not addressed to us
     // TODO: process ACKs
     decryptPacket(*incomingData);
@@ -129,6 +156,7 @@ void chatProtocol::sendAck(QByteArray id) {
 
 void chatProtocol::forwardPacket(QByteArray id) {
     std::cout << "forwardPacket (from theirPacketReceived signal) with id: "<< id.toHex().constData() << std::endl;
+
 }
 
 void chatProtocol::resendPacket(QByteArray id) {
