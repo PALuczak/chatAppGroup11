@@ -11,6 +11,7 @@
 #include "simplecrypt.h"
 #include <iostream>
 #include <QList>
+#include "chatpacket.h"
 
 class chatProtocol : public QObject
 {

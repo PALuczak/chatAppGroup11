@@ -47,30 +47,31 @@ void chatProtocol::readIncomingDatagrams()
     QNetworkDatagram incoming = this->commSocket.receiveDatagram();
     QByteArray * incomingData = new(QByteArray);
     *incomingData = incoming.data();
-
-    // send ack back to source address and broadcast the packet to all the connected computers
-    if (*incomingData->destinationName == "broadcast") {
-        for (int i=0; i<receiveBuffer.size(); i++) {
-            //the computer already received the packet before
-            if (receiveBuffer[i]==*incomingData) {
-                return;
-            }
-            //the computer didn't receive the packet before
-            else {
-                this->sendAck(*incomingData);
-                this->sendPacket(*incomingData);
-            }
+    //check if the packet is already received ones
+    for (int i=0; i<receiveBuffer.size(); i++) {
+        //the computer already received the packet before
+        if (receiveBuffer[i]==*incomingData) {
+            return;
         }
+    }
+    chatPacket packet;
+    packet.fromByteArray(*incomingData);
+    // send ack back to source address and broadcast the packet to all the connected computers
+    if (packet.getDestinationName() == "broadcast") {
+        this->receivePacket();
+        this->sendAck(*incomingData);
+        this->sendPacket(*incomingData);
     }
 
     //send ack back if packet was for this computer
-    else if (*incomingData->destinationName == "username") {
+    else if (packet.getDestinationName() == "username") {
+        this->receivePacket();
         this->sendAck(*incomingData);
     }
 
     //forward packet to the right destination if it was not a broadcast packet or for this computer
-    else if (*incomingData->destinationName != "username" && *incomingData->destinationName != "broadcast") {
-        this->forwardPacket(&incomingData);
+    else {
+        this->forwardPacket(*incomingData);
     }
 
     this->receiveBuffer.push_back(incomingData);
@@ -122,6 +123,7 @@ void chatProtocol::connectToChat()
 {
     this->commSocket.bind(QHostAddress::LocalHost, 8594);
     connect(&commSocket,SIGNAL(readyRead()),this,SLOT(readIncomingDatagrams()));
+    this->commSocket.joinMulticastGroup(groupAddress); //no clue what this does, but is in example
 }
 
 void chatProtocol::disconnectFromChat()
@@ -152,6 +154,7 @@ void chatProtocol::fakeSignals(int i, QByteArray id){
 
 void chatProtocol::sendAck(QByteArray id) {
     std::cout << "sendAck (from ourPacketReceived signal) with id: "<< id.toHex().constData() << std::endl;
+
 }
 
 void chatProtocol::forwardPacket(QByteArray id) {
