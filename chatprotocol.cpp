@@ -84,9 +84,9 @@ void chatProtocol::setUsername(QByteArray name)
     this->username = name; // TODO: limit this by length
 }
 
-void chatProtocol::getConnectedUsers(std::list<QByteArray> & list)
+void chatProtocol::getConnectedUsers(QList<QString> & list)
 {
-    for(QByteArray user : this->userList) {
+    for(QString user : this->userList) {
         list.push_back(user);
     }
 }
@@ -101,6 +101,11 @@ void chatProtocol::disconnectFromChat()
 {
     disconnect(&commSocket,SIGNAL(readyRead()),this,SLOT(readIncomingDatagrams()));
     this->commSocket.close();
+}
+
+void chatProtocol::enqueueMessage(QString)
+{
+
 }
 
 void chatProtocol::fakeSignals(int i, QByteArray id){

@@ -10,6 +10,7 @@
 #include <mutex>
 #include "simplecrypt.h"
 #include <iostream>
+#include <QList>
 
 class chatProtocol : public QObject
 {
@@ -27,7 +28,7 @@ private:
 
 
     QByteArray username;
-    std::list<QByteArray> userList;
+    QList<QString> userList;
 private slots:
     void readIncomingDatagrams();
 public:
@@ -36,10 +37,11 @@ public:
     QByteArray receivePacket();
     bool packetAvaialble();
     void setUsername(QByteArray name);
-    void getConnectedUsers(std::list<QByteArray> & list);
+    void getConnectedUsers(QList<QString> & list);
 public slots:
     void connectToChat();
     void disconnectFromChat();
+    void enqueueMessage(QString);
     // fakeSignals for tests purposes
     void fakeSignals(int i, QByteArray id);
     void sendAck(QByteArray id);
@@ -51,6 +53,10 @@ signals:
     void ourPacketReceived(QByteArray id);
     void theirPacketReceived(QByteArray id);
     void ackTimeout(QByteArray id);
+
+    void statusInfo(QString info, int timeout);
+    void usersUpdated(QList<QString> users);
+    void updateChat(QString message);
 };
 
 #endif // CHATPROTOCOL_H
