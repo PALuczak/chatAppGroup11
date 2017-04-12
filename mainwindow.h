@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include "chatprotocol.h"
+#include <QDateTime>
 
 namespace Ui {
 class MainWindow;
@@ -22,6 +23,7 @@ public slots:
     void disableConnect();
     void enableDisconnect();
     void disableDisconnect();
+    void setName();
 signals:
     void newMessageWritten(QString message);
 private:

@@ -6,6 +6,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    connect(ui->nameButton,SIGNAL(clicked()),this,SLOT(setName()));
     connect(ui->connectButton,SIGNAL(clicked()),&chat,SLOT(connectToChat()));
     connect(ui->connectButton,SIGNAL(clicked()),this,SLOT(disableConnect()));
     connect(ui->connectButton,SIGNAL(clicked()),this,SLOT(enableDisconnect()));
@@ -35,7 +36,12 @@ void MainWindow::updateUserList(QList<QString> users)
 
 void MainWindow::parseNewMessage()
 {
-    QString message = ui->inputLine->text();
+    if(!ui->inputLine->text().length()) return;
+    QString message;
+    QDateTime timestamp = QDateTime::currentDateTime();
+    message.append(timestamp.toString(Qt::ISODate));
+    message.append(" : ");
+    message.append(ui->inputLine->text());
     ui->inputLine->clear();
     ui->chatLog->append(message);
     emit newMessageWritten(message);
@@ -59,4 +65,13 @@ void MainWindow::enableDisconnect()
 void MainWindow::disableDisconnect()
 {
     ui->disconnectButton->setDisabled(true);
+}
+
+void MainWindow::setName()
+{
+    if(!ui->nameLine->text().length()) return;
+    chat.setUsername(ui->nameLine->text().toUtf8());
+    ui->nameLine->setReadOnly(true);
+    ui->connectButton->setEnabled(true);
+    ui->nameButton->setDisabled(true);
 }
