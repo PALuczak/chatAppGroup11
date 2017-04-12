@@ -27,7 +27,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>269</y>
+      <y>289</y>
       <width>481</width>
       <height>41</height>
      </rect>
@@ -49,7 +49,7 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>10</y>
+      <y>30</y>
       <width>321</width>
       <height>251</height>
      </rect>
@@ -62,36 +62,43 @@
     <property name="geometry">
      <rect>
       <x>340</x>
-      <y>10</y>
+      <y>30</y>
       <width>151</width>
       <height>251</height>
      </rect>
     </property>
    </widget>
-  </widget>
-  <widget class="QStatusBar" name="statusBar"/>
-  <widget class="QMenuBar" name="menuBar">
-   <property name="geometry">
-    <rect>
-     <x>0</x>
-     <y>0</y>
-     <width>502</width>
-     <height>23</height>
-    </rect>
-   </property>
-   <widget class="QMenu" name="menuConnect">
-    <property name="title">
+   <widget class="QPushButton" name="connectButton">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>0</y>
+      <width>121</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="text">
      <string>connect</string>
     </property>
    </widget>
-   <widget class="QMenu" name="menuDisconnect">
-    <property name="title">
+   <widget class="QPushButton" name="disconnectButton">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>150</x>
+      <y>0</y>
+      <width>121</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="text">
      <string>disconnect</string>
     </property>
    </widget>
-   <addaction name="menuConnect"/>
-   <addaction name="menuDisconnect"/>
   </widget>
+  <widget class="QStatusBar" name="statusBar"/>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources/>
