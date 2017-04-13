@@ -28,7 +28,7 @@ private:
     void decryptPacket(QByteArray & packet);
 
 
-    QByteArray username;
+    QString username;
     QList<QString> userList;
 private slots:
     void readIncomingDatagrams();
@@ -37,7 +37,7 @@ public:
     void sendPacket(QByteArray packet);
     QByteArray receivePacket(chatPacket packet);
     bool packetAvaialble();
-    void setUsername(QByteArray name);
+    void setUsername(QString name);
     void getConnectedUsers(QList<QString> & list);
 public slots:
     void connectToChat();
@@ -46,13 +46,13 @@ public slots:
     // fakeSignals for tests purposes
     void fakeSignals(int i, QByteArray id);
     void sendAck(QByteArray ackN, QString source);
-    void forwardPacket(chatPacket id);
+    void forwardPacket(chatPacket pkt);
     void resendPacket(chatPacket id);
     void sendNextPacket(chatPacket id);
 signals:
     void ackReceived(QByteArray id);
-    void ourPacketReceived(QByteArray id);
-    void theirPacketReceived(QByteArray id);
+    void ourPacketReceived(QByteArray ackN, QString source);
+    void theirPacketReceived(chatPacket pkt);
     void ackTimeout(QByteArray id);
 
     void statusInfo(QString info, int timeout);
