@@ -20,9 +20,9 @@ private:
     const QHostAddress groupAddress = QHostAddress("228.0.0.0");
     const quint16 udpPort = 4968;
     QUdpSocket commSocket;
-    std::deque<QByteArray *> receiveBuffer;
+    std::deque<QByteArray> receiveBuffer; //stores ID numbers
     std::mutex receiveMutex;
-    std::deque<QByteArray *> sendBuffer;
+    QList<chatPacket> sendBuffer; //stores whole packets
     std::mutex sendMutex;
     void encryptPacket(QByteArray & packet);
     void decryptPacket(QByteArray & packet);
@@ -35,7 +35,7 @@ private slots:
 public:
     chatProtocol();
     void sendPacket(QByteArray packet);
-    QByteArray receivePacket();
+    QByteArray receivePacket(chatPacket packet);
     bool packetAvaialble();
     void setUsername(QByteArray name);
     void getConnectedUsers(QList<QString> & list);
@@ -45,10 +45,10 @@ public slots:
     void enqueueMessage(QString);
     // fakeSignals for tests purposes
     void fakeSignals(int i, QByteArray id);
-    void sendAck(QByteArray id);
-    void forwardPacket(QByteArray id);
-    void resendPacket(QByteArray id);
-    void sendNextPacket(QByteArray id);
+    void sendAck(QByteArray ackN, QString source);
+    void forwardPacket(chatPacket id);
+    void resendPacket(chatPacket id);
+    void sendNextPacket(chatPacket id);
 signals:
     void ackReceived(QByteArray id);
     void ourPacketReceived(QByteArray id);

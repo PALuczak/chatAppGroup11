@@ -21,7 +21,7 @@ private:
     QString sourceName = "broadcast";
     QString destinationName = "broadcast";
     uint8_t dataLength = 0;
-    QByteArray packetData;
+    QByteArray packetData; //message
     bool fragment = false;
     uint8_t fragmentNumber = 0;
     uint8_t totalFragments = 0;
