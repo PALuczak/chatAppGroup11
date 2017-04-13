@@ -15,9 +15,9 @@ public:
         audio
     };
 private:
-    const uint8_t maxNameLength = 32;
-    const uint8_t maxDataLength = 255;
-    const uint8_t maxHashLength = 20;
+    static const uint8_t maxNameLength = 32;
+    static const uint8_t maxDataLength = 255;
+    static const uint8_t maxHashLength = 20;
     QString sourceName = "broadcast";
     QString destinationName = "broadcast";
     uint8_t dataLength = 0;
@@ -31,6 +31,7 @@ private:
     QByteArray ackId = "00000000000000000000";
 public:
     chatPacket();
+    chatPacket(const chatPacket &packet); // copy constructor
 
     QByteArray toByteArray();
     void fromByteArray(QByteArray bytes);
