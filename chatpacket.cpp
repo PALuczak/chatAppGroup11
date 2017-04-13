@@ -152,3 +152,17 @@ chatPacket::chatPacket()
 {
 
 }
+
+chatPacket::chatPacket(const chatPacket &packet)
+{
+    this->sourceName = packet.getSourceName();
+    this->destinationName = packet.getDestinationName();
+    this->dataLength = packet.dataLength;
+    this->packetData = packet.getPacketData();
+    this->fragment = packet.fragment;
+    this->fragmentNumber = packet.getFragmentNumber();
+    this->totalFragments = packet.getTotalFragments();
+    this->packetType = packet.getPacketType();
+    this->packetId = packet.getPacketId();
+    this->ackId = packet.getAckId();
+}
