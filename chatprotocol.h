@@ -43,8 +43,6 @@ public slots:
     void connectToChat();
     void disconnectFromChat();
     void enqueueMessage(QString);
-    // fakeSignals for tests purposes
-    void fakeSignals(int i, QByteArray id);
     void sendAck(QByteArray ackN, QString source);
     void forwardPacket(chatPacket pkt);
     void resendPacket(chatPacket id);
