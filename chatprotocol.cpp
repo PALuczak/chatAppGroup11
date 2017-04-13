@@ -13,32 +13,41 @@ void chatProtocol::encryptPacket(QByteArray & packet)
     QDataStream s(&buffer);
     s.setVersion(QDataStream::Qt_4_7);
     // Fill the stream with our input QByteArray
-    s << packet;
-    packet.clear();
+    QByteArray header = packet.left(64);
+    QByteArray actualData = packet.mid(64);
+    s << actualData;
+    actualData.clear();
     // Make a cypher with stream's data
-    packet = crypto.encryptToByteArray(buffer.data());
-        if (crypto.lastError() == SimpleCrypt::ErrorNoError) {
-        // do something relevant with the cyphertext, such as storing it or sending it over a socket to another machine.
-        }
+    actualData = crypto.encryptToByteArray(buffer.data());
     buffer.close();
+    if (crypto.lastError() != SimpleCrypt::ErrorNoError)
+        qDebug("ERROR: encryption failed. code: " + crypto.lastError());
+    packet.clear();
+    packet = header;
+    packet.append(actualData);
 }
 
 void chatProtocol::decryptPacket(QByteArray & packet)
 {
     // Initialize SimpleCrypt object with hexadecimal key = (0x)40b50fe120bbd01b
     SimpleCrypt crypto2(Q_UINT64_C(0x40b50fe120bbd01b));
-    QByteArray plaintext = crypto2.decryptToByteArray(packet);
-        if (!crypto2.lastError() == SimpleCrypt::ErrorNoError) {
-        // check why we have an error, use the error code from crypto.lastError() for that
-        }
+    QByteArray header = packet.left(64);
+    QByteArray actualData = packet.mid(64);
+    QByteArray plaintext = crypto2.decryptToByteArray(actualData);
+    if (crypto2.lastError() != SimpleCrypt::ErrorNoError)
+        qDebug("ERROR: decryption failed. code: " + crypto2.lastError());
     // Stream the data into a buffer
     QBuffer buffer2(&plaintext);
     buffer2.open(QIODevice::ReadOnly);
     QDataStream s2(&buffer2);
     s2.setVersion(QDataStream::Qt_4_7);
     // Output the decrypted cypher in our QByteArray
-    s2 >> packet;
+    actualData.clear();
+    s2 >> actualData;
     buffer2.close();
+    packet.clear();
+    packet = header;
+    packet.append(actualData);
 }
 
 void chatProtocol::readIncomingDatagrams()
