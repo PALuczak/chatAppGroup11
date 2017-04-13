@@ -120,10 +120,10 @@ void chatProtocol::readIncomingDatagrams()
 
 chatProtocol::chatProtocol()
 {
-    connect(this, SIGNAL(ourPacketReceived(QByteArray)), this, SLOT(sendAck(QByteArray)));
-    connect(this, SIGNAL(theirPacketReceived(QByteArray)), this, SLOT(forwardPacket(QByteArray)));
-    connect(this, SIGNAL(ackTimeout(QByteArray)), this, SLOT(resendPacket(QByteArray)));
-    connect(this, SIGNAL(ackReceived(QByteArray)), this, SLOT(sendNextPacket(QByteArray)));
+    connect(this, SIGNAL(ourPacketReceived(QByteArray, QString)), this, SLOT(sendAck(QByteArray, QString)));
+    connect(this, SIGNAL(theirPacketReceived(chatPacket )), this, SLOT(forwardPacket(chatPacket )));
+    connect(this, SIGNAL(ackTimeout(chatPacket)), this, SLOT(resendPacket(chatPacket)));
+    connect(this, SIGNAL(ackReceived(chatPacket)), this, SLOT(sendNextPacket(chatPacket)));
 }
 
 void chatProtocol::sendPacket(QByteArray packet)
@@ -214,10 +214,10 @@ void chatProtocol::forwardPacket(chatPacket pkt) {
 
 }
 
-void chatProtocol::resendPacket(chatPacket id) {
+void chatProtocol::resendPacket(chatPacket pkt) {
   //  std::cout << "resendPacket (from ackTimeout signal) with id: "<< id.toHex().constData() << std::endl;
 }
 
-void chatProtocol::sendNextPacket(chatPacket id) {
+void chatProtocol::sendNextPacket(chatPacket pkt) {
  //   std::cout << "sendNextPacket (from ackRecevied signal) with id: "<< id.toHex().constData() << std::endl;
 }
