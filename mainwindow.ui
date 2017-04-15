@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>502</width>
-    <height>356</height>
+    <width>778</width>
+    <height>516</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -27,8 +27,8 @@
     <property name="geometry">
      <rect>
       <x>10</x>
-      <y>289</y>
-      <width>481</width>
+      <y>450</y>
+      <width>761</width>
       <height>41</height>
      </rect>
     </property>
@@ -41,7 +41,14 @@
       </widget>
      </item>
      <item>
-      <widget class="QLineEdit" name="inputLine"/>
+      <widget class="QLineEdit" name="inputLine">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="maxLength">
+        <number>200</number>
+       </property>
+      </widget>
      </item>
     </layout>
    </widget>
@@ -50,8 +57,8 @@
      <rect>
       <x>10</x>
       <y>30</y>
-      <width>321</width>
-      <height>251</height>
+      <width>601</width>
+      <height>411</height>
      </rect>
     </property>
     <property name="readOnly">
@@ -61,10 +68,10 @@
    <widget class="QListWidget" name="userList">
     <property name="geometry">
      <rect>
-      <x>340</x>
+      <x>620</x>
       <y>30</y>
       <width>151</width>
-      <height>251</height>
+      <height>411</height>
      </rect>
     </property>
    </widget>
@@ -103,7 +110,7 @@
    <widget class="QPushButton" name="nameButton">
     <property name="geometry">
      <rect>
-      <x>410</x>
+      <x>690</x>
       <y>0</y>
       <width>80</width>
       <height>26</height>
@@ -116,11 +123,14 @@
    <widget class="QLineEdit" name="nameLine">
     <property name="geometry">
      <rect>
-      <x>222</x>
+      <x>440</x>
       <y>0</y>
-      <width>181</width>
+      <width>241</width>
       <height>26</height>
      </rect>
+    </property>
+    <property name="maxLength">
+     <number>32</number>
     </property>
    </widget>
   </widget>

@@ -39,6 +39,8 @@ void MainWindow::parseNewMessage()
     if(!ui->inputLine->text().length()) return;
     QString message;
     QDateTime timestamp = QDateTime::currentDateTime();
+    message.append(ui->nameLine->text());
+    message.append("@");
     message.append(timestamp.toString(Qt::ISODate));
     message.append(" : ");
     message.append(ui->inputLine->text());
@@ -60,11 +62,13 @@ void MainWindow::disableConnect()
 void MainWindow::enableDisconnect()
 {
     ui->disconnectButton->setEnabled(true);
+    ui->inputLine->setEnabled(true);
 }
 
 void MainWindow::disableDisconnect()
 {
     ui->disconnectButton->setDisabled(true);
+    ui->inputLine->setDisabled(true);
 }
 
 void MainWindow::setName()
