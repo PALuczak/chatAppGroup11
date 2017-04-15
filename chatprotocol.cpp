@@ -54,19 +54,20 @@ void chatProtocol::readIncomingDatagrams()
 {
     std::unique_lock<std::mutex> receiveLock(this->receiveMutex);
     QNetworkDatagram incoming = this->commSocket.receiveDatagram();
-    QByteArray * incomingData = new(QByteArray);
-    *incomingData = incoming.data();
-    decryptPacket(*incomingData);
+    QByteArray incomingData;
+    incomingData = incoming.data();
+    decryptPacket(incomingData);
 
     chatPacket packet;
-    packet.fromByteArray(*incomingData);
+    packet.fromByteArray(incomingData);
     //check if packet is corrupted
     chatPacket packet2;
-    packet2.fromByteArray(*incomingData);
+    packet2.fromByteArray(incomingData);
     packet2.makeHash();
 
     //not corrupt
     if (packet2.getPacketId()==packet.getPacketId()) {
+        if(packet.getSourceName() == this->username) return; // ignore packets that we send
 
         //packet is already received ones
 
@@ -74,7 +75,7 @@ void chatProtocol::readIncomingDatagrams()
             //the computer already received the packet before
             if (receiveBuffer[i]==packet.getPacketId()) {
                 //if the packet is for this computer, send an ack back again if it is not an ack-packet
-                if (packet.getDestinationName()==username && packet.getAckId()=="00000000000000000000") {
+                if (packet.getDestinationName()==this->username && packet.getAckId()=="00000000000000000000") {
                     emit ourPacketReceived(packet.getPacketId(), packet.getSourceName());
                 }
                 return;
@@ -84,7 +85,7 @@ void chatProtocol::readIncomingDatagrams()
         //new packet
 
         //if it is an ack packet for this user
-        if (packet.getAckId()!="00000000000000000000" && packet.getDestinationName()==username) {
+        if (packet.getAckId()!="00000000000000000000" && packet.getDestinationName()==this->username) {
 
             //erase packet from the sending window (sendBuffer)
             for (int i=0; i<sendBuffer.size(); i++) {
@@ -95,7 +96,7 @@ void chatProtocol::readIncomingDatagrams()
         }
 
         //if the packet is for this user
-        else if (packet.getDestinationName() == username) {
+        else if (packet.getDestinationName() == this->username) {
             emit updateChat(packet.getPacketData());
             emit ourPacketReceived(packet.getPacketId(), packet.getSourceName());
         }
@@ -135,7 +136,7 @@ void chatProtocol::sendPacket(QByteArray packet)
     }
 
     encryptPacket(packet);
-    this->commSocket.writeDatagram(packet,this->groupAddress,this->udpPort);
+    this->commSocket.writeDatagram(packet.data(),packet.size(),this->groupAddress,this->udpPort);
     // TODO: ensure relaibility
     // TODO: implement fragmentation is packet is too big
 }
@@ -168,9 +169,9 @@ void chatProtocol::getConnectedUsers(QList<QString> & list)
 
 void chatProtocol::connectToChat()
 {
-    this->commSocket.bind(QHostAddress::LocalHost, 8594);
+    this->commSocket.bind(QHostAddress::AnyIPv4, this->udpPort);
     connect(&commSocket,SIGNAL(readyRead()),this,SLOT(readIncomingDatagrams()));
-    this->commSocket.joinMulticastGroup(groupAddress); //no clue what this does, but is in example
+    this->commSocket.joinMulticastGroup(groupAddress);
 }
 
 void chatProtocol::disconnectFromChat()
@@ -195,9 +196,8 @@ void chatProtocol::sendAck(QByteArray ackN, QString source) {
     ackP.setDestinationName(source);
     ackP.setAckId(ackN);
     ackP.makeHash(); //id number
-    QByteArray* ackPacket = new(QByteArray);
-    ackP.fromByteArray(*ackPacket);
-    this->sendPacket(*ackPacket);
+    QByteArray ackPacket = ackP.toByteArray();
+    this->sendPacket(ackPacket);
 
   //  std::cout << "sendAck (from ourPacketReceived signal) with id: "<< id.toHex().constData() << std::endl;
 

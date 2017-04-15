@@ -17,8 +17,8 @@ class chatProtocol : public QObject
 {
     Q_OBJECT
 private:
-    const QHostAddress groupAddress = QHostAddress("228.0.0.0");
-    const quint16 udpPort = 4968;
+    const QHostAddress groupAddress = QHostAddress("228.1.2.3");
+    const quint16 udpPort = 38594;
     QUdpSocket commSocket;
     std::deque<QByteArray> receiveBuffer; //stores ID numbers
     std::mutex receiveMutex;
