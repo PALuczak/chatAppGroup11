@@ -52,7 +52,6 @@ void chatProtocol::decryptPacket(QByteArray & packet)
 
 void chatProtocol::readIncomingDatagrams()
 {
-    std::unique_lock<std::mutex> receiveLock(this->receiveMutex);
     QNetworkDatagram incoming = this->commSocket.receiveDatagram();
     QByteArray incomingData;
     incomingData = incoming.data();
@@ -66,88 +65,79 @@ void chatProtocol::readIncomingDatagrams()
     packet2.makeHash();
 
     //not corrupt
-    if (packet2.getPacketId()==packet.getPacketId()) {
-        if(packet.getSourceName() == this->username) return; // ignore packets that we send
-
-        //packet is already received ones
-
-        for (int i=0; i<(int)receiveBuffer.size(); i++) {
-            //the computer already received the packet before
-            if (receiveBuffer[i]==packet.getPacketId()) {
-                //if the packet is for this computer, send an ack back again if it is not an ack-packet
-                if (packet.getDestinationName()==this->username && packet.getAckId()=="00000000000000000000") {
-                    emit ourPacketReceived(packet.getPacketId(), packet.getSourceName());
-                }
-                return;
-            }
-        }
-
-        //new packet
-
-        //if it is an ack packet for this user
-        if (packet.getAckId()!="00000000000000000000" && packet.getDestinationName()==this->username) {
-
-            //erase packet from the sending window (sendBuffer)
-            for (int i=0; i<sendBuffer.size(); i++) {
-                if (packet.getAckId()==sendBuffer[i].getPacketId()) { //use the Id number to check if it is the same packet
-                    sendBuffer.erase(sendBuffer.begin()+i);
-                }
-            }
-        }
-
-        //if the packet is for this user
-        else if (packet.getDestinationName() == this->username) {
-            emit updateChat(packet.getPacketData());
-            emit ourPacketReceived(packet.getPacketId(), packet.getSourceName());
-        }
-
-        //if it is a broadcast packet
-        else if (packet.getDestinationName() == "broadcast") {
-            emit updateChat(packet.getPacketData());
-            emit ourPacketReceived(packet.getPacketId(), packet.getSourceName());
-        }
-
-        //forward packet to the right destination if it was not a broadcast packet or for this computer
-        else {
-            emit theirPacketReceived(packet);
-        }
-
-         this->receiveBuffer.push_back(packet.getPacketId());
-
-        // TODO: process fragmented packets
-
-    }
+    if (packet2.getPacketId()==packet.getPacketId()) this->receivePacket(packet);
 }
 
 chatProtocol::chatProtocol()
 {
     connect(this, SIGNAL(ourPacketReceived(QByteArray, QString)), this, SLOT(sendAck(QByteArray, QString)));
     connect(this, SIGNAL(theirPacketReceived(chatPacket )), this, SLOT(forwardPacket(chatPacket )));
-    connect(this, SIGNAL(ackTimeout(chatPacket)), this, SLOT(resendPacket(chatPacket)));
-    connect(this, SIGNAL(ackReceived(chatPacket)), this, SLOT(sendNextPacket(chatPacket)));
+    connect(&clock,SIGNAL(timeout()),this,SLOT(clockedSender()));
 }
 
 void chatProtocol::sendPacket(QByteArray packet)
 {
-    chatPacket tempPkt;
-    tempPkt.fromByteArray(packet);
-    if(tempPkt.getPacketId() == "00000000000000000000"){
-        sendBuffer.push_back(tempPkt);
-    }
-
     encryptPacket(packet);
     this->commSocket.writeDatagram(packet.data(),packet.size(),this->groupAddress,this->udpPort);
+
     // TODO: ensure relaibility
     // TODO: implement fragmentation is packet is too big
 }
 
-QByteArray chatProtocol::receivePacket(chatPacket packet)
+void chatProtocol::receivePacket(chatPacket packet)
 {
+    std::unique_lock<std::mutex> receiveLock(this->receiveMutex);
+    if(packet.getSourceName() == this->username) return; // ignore packets that we send
 
-    //show the data from the packet in the console
-QByteArray ar;
+    //packet is already received ones
 
-    return ar;
+    //the computer already received the packet before
+    if (receiveBuffer.find(packet.getPacketId()) != receiveBuffer.end()) {
+        //if the packet is for this computer, send an ack back again if it is not an ack-packet
+        if (packet.getDestinationName()==this->username && packet.getAckId()=="00000000000000000000")
+            emit ourPacketReceived(packet.getPacketId(), packet.getSourceName());
+        return;
+    }
+
+    //new packet
+    this->receiveBuffer.insert((packet.getPacketId()));
+
+    //if it is an ack packet for this user
+    if (packet.getAckId()!="00000000000000000000" && packet.getDestinationName()==this->username) {
+
+        //erase packet from the sending window (sendBuffer)
+        for (int i=0; i<sendBuffer.size(); i++) {
+            if (packet.getAckId()==sendBuffer[i].getPacketId()) { //use the Id number to check if it is the same packet
+                sendBuffer.erase(sendBuffer.begin()+i);
+            }
+        }
+    }
+
+    //if the packet is for this user or is a broadcast packet
+    else if (packet.getDestinationName() == this->username || packet.getDestinationName() == "broadcast") {
+        bool userKnown = false;
+        for(QString user : this->userList) {
+            if (user == packet.getSourceName()){
+                userKnown = true;
+                break;
+            }
+        }
+        if(!userKnown) {
+            userList.append(packet.getSourceName());
+            emit usersUpdated(this->userList);
+        }
+
+        emit updateChat(packet.getPacketData());
+        emit ourPacketReceived(packet.getPacketId(), packet.getSourceName());
+    }
+
+    //forward packet to the right destination if it was not a broadcast packet or for this computer
+    else
+        emit theirPacketReceived(packet);
+
+
+
+    // TODO: process fragmented packets
 }
 
 bool chatProtocol::packetAvaialble()
@@ -160,11 +150,9 @@ void chatProtocol::setUsername(QString name)
     this->username = name; // TODO: limit this by length
 }
 
-void chatProtocol::getConnectedUsers(QList<QString> & list)
+QList<QString> chatProtocol::getConnectedUsers()
 {
-    for(QString user : this->userList) {
-        list.push_back(user);
-    }
+    return userList;
 }
 
 void chatProtocol::connectToChat()
@@ -182,10 +170,13 @@ void chatProtocol::disconnectFromChat()
 
 void chatProtocol::enqueueMessage(QString message)
 {
+    std::unique_lock<std::mutex> sendLock(this->sendMutex);
     chatPacket packet;
     packet.setSourceName(username);
     packet.setPacketData(message.toUtf8());
     packet.makeHash();
+    sendBuffer.push_back(packet);
+    sendLock.unlock();
     this->sendPacket(packet.toByteArray());
 }
 
@@ -198,9 +189,6 @@ void chatProtocol::sendAck(QByteArray ackN, QString source) {
     ackP.makeHash(); //id number
     QByteArray ackPacket = ackP.toByteArray();
     this->sendPacket(ackPacket);
-
-  //  std::cout << "sendAck (from ourPacketReceived signal) with id: "<< id.toHex().constData() << std::endl;
-
 }
 
 void chatProtocol::forwardPacket(chatPacket pkt) {
@@ -209,15 +197,9 @@ void chatProtocol::forwardPacket(chatPacket pkt) {
     //or
     //broadcast packet to all connected computers
     this->sendPacket(pkt.toByteArray());
-
-  //  std::cout << "forwardPacket (from theirPacketReceived signal) with id: "<< id.toHex().constData() << std::endl;
-
 }
 
-void chatProtocol::resendPacket(chatPacket pkt) {
-  //  std::cout << "resendPacket (from ackTimeout signal) with id: "<< id.toHex().constData() << std::endl;
-}
+void chatProtocol::clockedSender()
+{
 
-void chatProtocol::sendNextPacket(chatPacket pkt) {
- //   std::cout << "sendNextPacket (from ackRecevied signal) with id: "<< id.toHex().constData() << std::endl;
 }
