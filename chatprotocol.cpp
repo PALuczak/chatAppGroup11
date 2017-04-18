@@ -116,19 +116,26 @@ void chatProtocol::receivePacket(chatPacket packet)
 
     //if the packet is for this user or is a broadcast packet
     if (packet.getDestinationName() == this->username || packet.getDestinationName() == "broadcast") {
-        bool userKnown = false;
-        for(QString user : this->userList) {
-            if (user == packet.getSourceName()){
-                userKnown = true;
-                break;
-            }
-        }
-        if(!userKnown) {
+
+        if(!userList.contains(packet.getSourceName())) {
             userList.append(packet.getSourceName());
             emit usersUpdated(this->userList);
         }
+        if(packet.getPacketData() == "CONNECTED"){
+            QString message;
+            message.append(this->username);
+            message.append(" has connected");
+            emit updateChat(message);
+        }
+        if(packet.getPacketData() == "DISCONNECTED"){
+            QString message;
+            message.append(packet.getSourceName());
+            message.append(" has disconnected");
+            emit updateChat(message);
+            userList.removeAll(packet.getSourceName());
+        }
 
-        emit updateChat(packet.getPacketData());
+        else emit updateChat(packet.getPacketData());
         if(packet.getDestinationName() == "broadcast") emit theirPacketReceived(packet);
         emit ourPacketReceived(packet.getPacketId(), packet.getSourceName());
         return;
@@ -163,23 +170,16 @@ void chatProtocol::connectToChat()
     connect(&commSocket,SIGNAL(readyRead()),this,SLOT(readIncomingDatagrams()));
     this->commSocket.joinMulticastGroup(groupAddress);
 
-    QString message;
-    QDateTime timestamp = QDateTime::currentDateTime();
-    message.append(this->username);
-    message.append("@");
-    message.append(timestamp.toString(Qt::ISODate));
-    message.append(" : has connected");
+    QString message("CONNECTED");
+
     this->enqueueMessage(message);
 }
 
 void chatProtocol::disconnectFromChat()
 {
-    QString message;
-    QDateTime timestamp = QDateTime::currentDateTime();
-    message.append(this->username);
-    message.append("@");
-    message.append(timestamp.toString(Qt::ISODate));
-    message.append(" : has disconnected");
+
+    QString message("DISCONNECTED");
+
     this->enqueueMessage(message);
     disconnect(&commSocket,SIGNAL(readyRead()),this,SLOT(readIncomingDatagrams()));
     this->commSocket.close();
