@@ -15,7 +15,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->disconnectButton,SIGNAL(clicked()),this,SLOT(enableConnect()));
     connect(ui->inputLine,SIGNAL(returnPressed()),this,SLOT(parseNewMessage()));
     connect(this,SIGNAL(newMessageWritten(QString)),&chat,SLOT(enqueueMessage(QString)));
+    connect(this,SIGNAL(newDirectMessageWritten(QString,QString)),&chat,SLOT(enqueueDirectMessage(QString,QString)));
     connect(&chat,SIGNAL(updateChat(QString)),ui->chatLog,SLOT(append(QString)));
+    connect(&chat,SIGNAL(updateChatDirectMessage(QString)),this,SLOT(showDirectMesage(QString)));
     connect(&chat,SIGNAL(statusInfo(QString,int)),ui->statusBar,SLOT(showMessage(QString,int)));
     connect(&chat,SIGNAL(usersUpdated(QList<QString>)),this,SLOT(updateUserList(QList<QString>)));
 }
@@ -45,8 +47,23 @@ void MainWindow::parseNewMessage()
     message.append(" : ");
     message.append(ui->inputLine->text());
     ui->inputLine->clear();
-    ui->chatLog->append(message);
-    emit newMessageWritten(message);
+    if(ui->userList->currentRow() == -1) {
+        ui->chatLog->append(message);
+        emit newMessageWritten(message);
+    }
+    else if(ui->userList->currentItem()->text() == "broadcast") {
+        ui->chatLog->append(message);
+        emit newMessageWritten(message);
+    }
+    else {
+        QColor defaultColor = ui->chatLog->textColor();
+        ui->chatLog->setTextColor(QColor(Qt::blue));
+        ui->chatLog->append(message);
+        ui->chatLog->setTextColor(defaultColor);
+        emit newDirectMessageWritten(message, ui->userList->currentItem()->text());
+    }
+
+
 }
 
 void MainWindow::enableConnect()
@@ -81,4 +98,12 @@ void MainWindow::setName()
     ui->keyLine->setReadOnly(true);
     ui->connectButton->setEnabled(true);
     ui->nameButton->setDisabled(true);
+}
+
+void MainWindow::showDirectMesage(QString message)
+{
+    QColor defaultColor = ui->chatLog->textColor();
+    ui->chatLog->setTextColor(QColor(Qt::blue));
+    ui->chatLog->append(message);
+    ui->chatLog->setTextColor(defaultColor);
 }

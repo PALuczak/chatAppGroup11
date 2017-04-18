@@ -62,6 +62,7 @@ public slots:
     void connectToChat();
     void disconnectFromChat();
     void enqueueMessage(QString);
+    void enqueueDirectMessage(QString message, QString user);
     void sendAck(QByteArray ackN, QString source);
     void forwardPacket(chatPacket pkt);
     void clockedSender();
@@ -73,6 +74,7 @@ signals:
     void statusInfo(QString info, int timeout);
     void usersUpdated(QList<QString> users);
     void updateChat(QString message);
+    void updateChatDirectMessage(QString message);
 };
 
 #endif // CHATPROTOCOL_H

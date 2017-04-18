@@ -162,8 +162,10 @@ void chatProtocol::receivePacket(chatPacket packet)
             userList.removeAll(packet.getSourceName());
             emit usersUpdated(this->userList);
         }
-        else emit updateChat(packet.getPacketData());
-
+        else{
+            if(packet.getDestinationName() == this->username) emit updateChatDirectMessage(packet.getPacketData());
+            else emit updateChat(packet.getPacketData());
+        }
         if(packet.getDestinationName() == "broadcast") emit theirPacketReceived(packet);
         emit ourPacketReceived(packet.getPacketId(), packet.getSourceName());
         return;
@@ -225,6 +227,23 @@ void chatProtocol::enqueueMessage(QString message)
 
     packet.setAckUsers(userList); // give a list will all the current users to the packet, so the packet knows how many ack it should receive
     packet.setTimeOut(currentTimeOut); // set a current time to the packet, can be used to check for timeout
+    sendBuffer.push_back(packet);
+    sendLock.unlock();
+    this->sendPacket(packet.toByteArray());
+}
+
+void chatProtocol::enqueueDirectMessage(QString message, QString user)
+{
+    std::unique_lock<std::mutex> sendLock(this->sendMutex);
+    chatPacket packet;
+    packet.setSourceName(username);
+    packet.setDestinationName(user);
+    packet.setPacketData(message.toUtf8());
+    packet.makeHash();
+    QList<QString> users;\
+    users.append(user);
+    packet.setAckUsers(users);
+    packet.setTimeOut(currentTimeOut);
     sendBuffer.push_back(packet);
     sendLock.unlock();
     this->sendPacket(packet.toByteArray());
