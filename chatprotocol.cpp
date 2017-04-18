@@ -111,10 +111,11 @@ void chatProtocol::receivePacket(chatPacket packet)
                 sendBuffer.erase(sendBuffer.begin()+i);
             }
         }
+        return;
     }
 
     //if the packet is for this user or is a broadcast packet
-    else if (packet.getDestinationName() == this->username || packet.getDestinationName() == "broadcast") {
+    if (packet.getDestinationName() == this->username || packet.getDestinationName() == "broadcast") {
         bool userKnown = false;
         for(QString user : this->userList) {
             if (user == packet.getSourceName()){
@@ -128,12 +129,13 @@ void chatProtocol::receivePacket(chatPacket packet)
         }
 
         emit updateChat(packet.getPacketData());
+        if(packet.getDestinationName() == "broadcast") emit theirPacketReceived(packet);
         emit ourPacketReceived(packet.getPacketId(), packet.getSourceName());
+        return;
     }
 
     //forward packet to the right destination if it was not a broadcast packet or for this computer
-    else
-        emit theirPacketReceived(packet);
+    emit theirPacketReceived(packet);
 
 
 
