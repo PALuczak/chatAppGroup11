@@ -162,10 +162,25 @@ void chatProtocol::connectToChat()
     this->commSocket.bind(QHostAddress::AnyIPv4, this->udpPort);
     connect(&commSocket,SIGNAL(readyRead()),this,SLOT(readIncomingDatagrams()));
     this->commSocket.joinMulticastGroup(groupAddress);
+
+    QString message;
+    QDateTime timestamp = QDateTime::currentDateTime();
+    message.append(this->username);
+    message.append("@");
+    message.append(timestamp.toString(Qt::ISODate));
+    message.append(" : has connected");
+    this->enqueueMessage(message);
 }
 
 void chatProtocol::disconnectFromChat()
 {
+    QString message;
+    QDateTime timestamp = QDateTime::currentDateTime();
+    message.append(this->username);
+    message.append("@");
+    message.append(timestamp.toString(Qt::ISODate));
+    message.append(" : has disconnected");
+    this->enqueueMessage(message);
     disconnect(&commSocket,SIGNAL(readyRead()),this,SLOT(readIncomingDatagrams()));
     this->commSocket.close();
 }
