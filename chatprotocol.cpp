@@ -131,21 +131,22 @@ void chatProtocol::receivePacket(chatPacket packet)
             userList.append(packet.getSourceName());
             emit usersUpdated(this->userList);
         }
-        if(packet.getPacketData() == "CONNECTED"){
+
+        if(packet.getPacketData().left(9) == "CONNECTED") {
             QString message;
             message.append(this->username);
             message.append(" has connected");
             emit updateChat(message);
         }
-        if(packet.getPacketData() == "DISCONNECTED"){
+        else if(packet.getPacketData().left(12) == "DISCONNECTED") {
             QString message;
             message.append(packet.getSourceName());
             message.append(" has disconnected");
             emit updateChat(message);
             userList.removeAll(packet.getSourceName());
         }
-
         else emit updateChat(packet.getPacketData());
+
         if(packet.getDestinationName() == "broadcast") emit theirPacketReceived(packet);
         emit ourPacketReceived(packet.getPacketId(), packet.getSourceName());
         return;
@@ -181,6 +182,7 @@ void chatProtocol::connectToChat()
     this->commSocket.joinMulticastGroup(groupAddress);
 
     QString message("CONNECTED");
+    message.append(QDateTime::currentDateTime().toString(Qt::ISODate));
 
     this->enqueueMessage(message);
 }
@@ -189,6 +191,7 @@ void chatProtocol::disconnectFromChat()
 {
 
     QString message("DISCONNECTED");
+    message.append(QDateTime::currentDateTime().toString(Qt::ISODate));
 
     this->enqueueMessage(message);
     disconnect(&commSocket,SIGNAL(readyRead()),this,SLOT(readIncomingDatagrams()));
