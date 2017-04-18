@@ -74,6 +74,8 @@ chatProtocol::chatProtocol()
     connect(this, SIGNAL(theirPacketReceived(chatPacket )), this, SLOT(forwardPacket(chatPacket )));
     connect(&clock,SIGNAL(timeout()),this,SLOT(clockedSender()));
     clock.start(30000); // call clockedSender every 0.5 minute
+    connect(&clockAck,SIGNAL(timeout()),this,SLOT(resendPack()));
+    clockAck.start(1000); // timeout of packets
 }
 
 void chatProtocol::sendPacket(QByteArray packet)
@@ -113,12 +115,13 @@ void chatProtocol::receivePacket(chatPacket packet)
 //            }
 //        }
 
-        for (auto e : sendBuffer2.keys()) { // loop through all the packets
-            if (packet.getAckId()==e.getPacketId()) {
-                for (int i=0; i<sendBuffer2.value(e).size(); i++) { // check if an ack is still needed from this user
-//                    if (packet.getSourceName()==sendBuffer2.value(e)[i]) {
-//                       // sendBuffer2.value(e).erase(sendBuffer2.value(e).begin()+i);
-//                    }
+        for (int i=0; i<sendBuffer.size(); i++) {
+            if (packet.getAckId()==sendBuffer[i].getPacketId()) { //use the Id number to check if it is the same packet
+                if (sendBuffer[i].getAckUsers().contains(packet.getSourceName())) {
+                    sendBuffer[i].removeUser(packet.getSourceName());
+                }
+                if (sendBuffer[i].getAckUsers().size()==0) {
+                     sendBuffer.erase(sendBuffer.begin()+i);
                 }
             }
         }
@@ -194,8 +197,10 @@ void chatProtocol::enqueueMessage(QString message)
     packet.setSourceName(username);
     packet.setPacketData(message.toUtf8());
     packet.makeHash();
-   // sendBuffer.push_back(packet);
-    //sendBuffer2.insert(packet, userList);
+
+    packet.setAckUsers(userList);
+    packet.setTimeOut(currentTimeOut);
+    sendBuffer.push_back(packet);
     sendLock.unlock();
     this->sendPacket(packet.toByteArray());
 }
@@ -239,6 +244,17 @@ void chatProtocol::clockedSender()
             }
         }
     }
+}
 
+void chatProtocol::resendPack() {
+    for (int i =0; i<sendBuffer.size();i++) {
+        if (sendBuffer[i].getTimeOut()-currentTimeOut!=0) {
+            if (sendBuffer[i].getAckUsers().size()!=0) {
+                sendBuffer[i].setTimeOut(currentTimeOut);
+                this->sendPacket(sendBuffer[i].toByteArray());
+            }
+        }
+    }
+    currentTimeOut++;
 
 }
