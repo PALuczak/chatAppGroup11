@@ -75,7 +75,7 @@ chatProtocol::chatProtocol()
     connect(&clock,SIGNAL(timeout()),this,SLOT(clockedSender()));
     clock.start(30000); // call clockedSender every 0.5 minute
     connect(&clockAck,SIGNAL(timeout()),this,SLOT(resendPack()));
-    clockAck.start(1000); // timeout of packets
+    clockAck.start(1000); // check every sec if the timeout of packets are overdue
 }
 
 void chatProtocol::sendPacket(QByteArray packet)
@@ -83,8 +83,8 @@ void chatProtocol::sendPacket(QByteArray packet)
     encryptPacket(packet);
     this->commSocket.writeDatagram(packet.data(),packet.size(),this->groupAddress,this->udpPort);
 
-    // TODO: ensure relaibility
-    // TODO: implement fragmentation is packet is too big
+    // TODO: ensure relaibility --> i think we did this now
+    // TODO: implement fragmentation is packet is too big --> we don do this anymore
 }
 
 void chatProtocol::receivePacket(chatPacket packet)
@@ -109,17 +109,14 @@ void chatProtocol::receivePacket(chatPacket packet)
     if (packet.getAckId()!="00000000000000000000" && packet.getDestinationName()==this->username) {
 
         //erase packet from the sending window (sendBuffer)
-//        for (int i=0; i<sendBuffer.size(); i++) {
-//            if (packet.getAckId()==sendBuffer[i].getPacketId()) { //use the Id number to check if it is the same packet
-//                sendBuffer.erase(sendBuffer.begin()+i);
-//            }
-//        }
 
         for (int i=0; i<sendBuffer.size(); i++) {
             if (packet.getAckId()==sendBuffer[i].getPacketId()) { //use the Id number to check if it is the same packet
+                //check if the packets still needs an ack of this user
                 if (sendBuffer[i].getAckUsers().contains(packet.getSourceName())) {
-                    sendBuffer[i].removeUser(packet.getSourceName());
+                    sendBuffer[i].removeUser(packet.getSourceName()); // remove the user if the ack of this user is received
                 }
+                // remove the packet from the buffer if all the acks of the users are received
                 if (sendBuffer[i].getAckUsers().size()==0) {
                      sendBuffer.erase(sendBuffer.begin()+i);
                 }
@@ -140,12 +137,12 @@ void chatProtocol::receivePacket(chatPacket packet)
         }
         if(!userKnown) {
             userList.append(packet.getSourceName());
-            userListTime.insert(packet.getSourceName(), curCounter);
+            userListTime.insert(packet.getSourceName(), curCounter); // link user to current value timer, if timer is not update regularly, there is no connections, so this user is removed
             emit usersUpdated(this->userList);
         }
 
         else {
-            userListTime.insert(packet.getSourceName(), curCounter);
+            userListTime.insert(packet.getSourceName(), curCounter); // update the time with the current time to keep track that this user is still online
         }
 
         emit updateChat(packet.getPacketData());
@@ -198,8 +195,8 @@ void chatProtocol::enqueueMessage(QString message)
     packet.setPacketData(message.toUtf8());
     packet.makeHash();
 
-    packet.setAckUsers(userList);
-    packet.setTimeOut(currentTimeOut);
+    packet.setAckUsers(userList); // give a list will all the current users to the packet, so the packet knows how many ack it should receive
+    packet.setTimeOut(currentTimeOut); // set a current time to the packet, can be used to check for timeout
     sendBuffer.push_back(packet);
     sendLock.unlock();
     this->sendPacket(packet.toByteArray());
@@ -246,15 +243,16 @@ void chatProtocol::clockedSender()
     }
 }
 
+// send a packet if it didn receive an ack in time, same packet as previous is broadcast
 void chatProtocol::resendPack() {
-    for (int i =0; i<sendBuffer.size();i++) {
-        if (sendBuffer[i].getTimeOut()-currentTimeOut!=0) {
-            if (sendBuffer[i].getAckUsers().size()!=0) {
-                sendBuffer[i].setTimeOut(currentTimeOut);
-                this->sendPacket(sendBuffer[i].toByteArray());
+    for (int i =0; i<sendBuffer.size();i++) { // loop through all the packets in the buffer
+        if (sendBuffer[i].getTimeOut()-currentTimeOut!=0) { // check if the difference between the currentTimeOut and the timeout of the packets is bigger then 1
+            if (sendBuffer[i].getAckUsers().size()!=0) { // check if it still needs to get acks from users
+                sendBuffer[i].setTimeOut(currentTimeOut); // set the currentTimeOut as the new timeout for this packet
+                this->sendPacket(sendBuffer[i].toByteArray()); // broadcast the packet
             }
         }
     }
-    currentTimeOut++;
+    currentTimeOut++; // increment the currentTimeOut with 1
 
 }
