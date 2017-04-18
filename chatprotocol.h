@@ -9,6 +9,7 @@
 #include <QSet>
 #include <QList>
 #include <QTimer>
+#include <QVector>
 
 #include <mutex>
 
@@ -27,6 +28,7 @@ private:
     QSet<QByteArray> receiveBuffer; //stores ID numbers
     std::mutex receiveMutex;
     QList<chatPacket> sendBuffer; //stores whole packets
+    QMap<chatPacket, QVector<QString>> sendBuffer2;
     std::mutex sendMutex;
 
     const unsigned int packetTimeout = 1000; // milliseconds
@@ -37,6 +39,9 @@ private:
 
     QString username;
     QList<QString> userList;
+    QMap<QString, int> userListTime;
+    int curCounter = 0;
+
 private slots:
     void readIncomingDatagrams();
 public:
