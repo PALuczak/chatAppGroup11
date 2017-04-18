@@ -144,6 +144,7 @@ void chatProtocol::receivePacket(chatPacket packet)
             message.append(" has disconnected");
             emit updateChat(message);
             userList.removeAll(packet.getSourceName());
+            emit usersUpdated(this->userList);
         }
         else emit updateChat(packet.getPacketData());
 
