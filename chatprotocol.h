@@ -35,6 +35,7 @@ private:
 
     void encryptPacket(QByteArray & packet);
     void decryptPacket(QByteArray & packet);
+    quint64 encryptionKey = 0x40b50fe120bbd01b;
 
     QString username;
     QList<QString> userList;
@@ -47,6 +48,9 @@ public:
     bool packetAvaialble();
     void setUsername(QString name);
     QList<QString> getConnectedUsers();
+    quint64 getEncryptionKey() const;
+    void setEncryptionKey(const quint64 &value);
+
 public slots:
     void connectToChat();
     void disconnectFromChat();

@@ -3,7 +3,7 @@
 void chatProtocol::encryptPacket(QByteArray & packet)
 {
     // Initialize SimpleCrypt object with hexadecimal key = (0x)40b50fe120bbd01b
-    SimpleCrypt crypto(Q_UINT64_C(0x40b50fe120bbd01b));
+    SimpleCrypt crypto(this->encryptionKey);
     // Set compression and integrity options
     crypto.setCompressionMode(SimpleCrypt::CompressionAlways); //always compress the data, see section below
     crypto.setIntegrityProtectionMode(SimpleCrypt::ProtectionHash); //properly protect the integrity of the data
@@ -30,7 +30,7 @@ void chatProtocol::encryptPacket(QByteArray & packet)
 void chatProtocol::decryptPacket(QByteArray & packet)
 {
     // Initialize SimpleCrypt object with hexadecimal key = (0x)40b50fe120bbd01b
-    SimpleCrypt crypto2(Q_UINT64_C(0x40b50fe120bbd01b));
+    SimpleCrypt crypto2(this->encryptionKey);
     QByteArray header = packet.left(64);
     QByteArray actualData = packet.mid(64);
     QByteArray plaintext = crypto2.decryptToByteArray(actualData);
@@ -48,6 +48,16 @@ void chatProtocol::decryptPacket(QByteArray & packet)
     packet.clear();
     packet = header;
     packet.append(actualData);
+}
+
+quint64 chatProtocol::getEncryptionKey() const
+{
+    return this->encryptionKey;
+}
+
+void chatProtocol::setEncryptionKey(const quint64 &value)
+{
+    this->encryptionKey = value;
 }
 
 void chatProtocol::readIncomingDatagrams()

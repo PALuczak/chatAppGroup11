@@ -74,8 +74,11 @@ void MainWindow::disableDisconnect()
 void MainWindow::setName()
 {
     if(!ui->nameLine->text().length()) return;
+    if(ui->keyLine->text().length() != 19) return;
+    chat.setEncryptionKey(ui->keyLine->text().simplified().replace(" ","").toUpper().toULongLong(nullptr,16));
     chat.setUsername(ui->nameLine->text().toUtf8());
     ui->nameLine->setReadOnly(true);
+    ui->keyLine->setReadOnly(true);
     ui->connectButton->setEnabled(true);
     ui->nameButton->setDisabled(true);
 }
