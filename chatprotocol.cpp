@@ -134,7 +134,7 @@ void chatProtocol::receivePacket(chatPacket packet)
 
         if(packet.getPacketData().left(9) == "CONNECTED") {
             QString message;
-            message.append(this->username);
+            message.append(packet.getSourceName());
             message.append(" has connected");
             emit updateChat(message);
         }
