@@ -110,27 +110,61 @@
    <widget class="QPushButton" name="nameButton">
     <property name="geometry">
      <rect>
-      <x>690</x>
+      <x>649</x>
       <y>0</y>
-      <width>80</width>
+      <width>121</width>
       <height>26</height>
      </rect>
     </property>
     <property name="text">
-     <string>set name</string>
+     <string>set name and key</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="nameLine">
     <property name="geometry">
      <rect>
-      <x>440</x>
+      <x>390</x>
       <y>0</y>
-      <width>241</width>
+      <width>251</width>
       <height>26</height>
      </rect>
     </property>
     <property name="maxLength">
      <number>32</number>
+    </property>
+    <property name="placeholderText">
+     <string>username</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="keyLine">
+    <property name="geometry">
+     <rect>
+      <x>220</x>
+      <y>0</y>
+      <width>161</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="inputMethodHints">
+     <set>Qt::ImhDigitsOnly</set>
+    </property>
+    <property name="inputMask">
+     <string>HHHH HHHH HHHH HHHH</string>
+    </property>
+    <property name="text">
+     <string>40b5 0fe1 20bb d01b</string>
+    </property>
+    <property name="maxLength">
+     <number>19</number>
+    </property>
+    <property name="cursorPosition">
+     <number>0</number>
+    </property>
+    <property name="placeholderText">
+     <string/>
+    </property>
+    <property name="clearButtonEnabled">
+     <bool>true</bool>
     </property>
    </widget>
   </widget>
