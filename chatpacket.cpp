@@ -138,6 +138,30 @@ QByteArray chatPacket::getPacketId() const
     return packetId;
 }
 
+QList<QString> chatPacket::getAckUsers() const {
+    return ackUsers;
+}
+
+void chatPacket::setAckUsers(QList<QString> users) {
+    ackUsers = users;
+}
+
+void chatPacket::setTimeOut(int curTimeout) {
+    timeout=curTimeout;
+}
+
+uint8_t chatPacket::getTimeOut() {
+    return timeout;
+}
+
+void chatPacket::removeUser(QString username) {
+    for (int i=0; i<ackUsers.size(); i++){
+        if (ackUsers[i]==username) {
+            ackUsers.erase(ackUsers.begin()+i);
+        }
+    }
+}
+
 void chatPacket::setAckId(const QByteArray &value)
 {
     this->ackId = value;

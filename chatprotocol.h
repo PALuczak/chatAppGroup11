@@ -10,6 +10,7 @@
 #include <QList>
 #include <QTimer>
 #include <QDateTime>
+#include <QVector>
 
 #include <mutex>
 
@@ -32,6 +33,7 @@ private:
 
     const unsigned int packetTimeout = 1000; // milliseconds
     QTimer clock;
+    QTimer clockAck;
 
     void encryptPacket(QByteArray & packet);
     void decryptPacket(QByteArray & packet);
@@ -39,6 +41,11 @@ private:
 
     QString username;
     QList<QString> userList;
+    QMap<QString, int> userListTime;
+    int curCounter = 0;
+
+    int currentTimeOut = 0;
+
 private slots:
     void readIncomingDatagrams();
 public:
@@ -58,6 +65,7 @@ public slots:
     void sendAck(QByteArray ackN, QString source);
     void forwardPacket(chatPacket pkt);
     void clockedSender();
+    void resendPack();
 signals:
     void ourPacketReceived(QByteArray ackN, QString source);
     void theirPacketReceived(chatPacket pkt);
