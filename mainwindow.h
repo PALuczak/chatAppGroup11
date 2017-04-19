@@ -24,8 +24,10 @@ public slots:
     void enableDisconnect();
     void disableDisconnect();
     void setName();
+    void showDirectMesage(QString message);
 signals:
     void newMessageWritten(QString message);
+    void newDirectMessageWritten(QString message, QString user);
 private:
     Ui::MainWindow *ui;
     chatProtocol chat;

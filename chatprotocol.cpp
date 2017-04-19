@@ -1,6 +1,5 @@
 #include "chatprotocol.h"
 
-
 void chatProtocol::encryptPacket(QByteArray & packet)
 {
     // Initialize SimpleCrypt object with hexadecimal key = (0x)40b50fe120bbd01b
@@ -84,9 +83,8 @@ chatProtocol::chatProtocol()
     connect(this, SIGNAL(ourPacketReceived(QByteArray, QString)), this, SLOT(sendAck(QByteArray, QString)));
     connect(this, SIGNAL(theirPacketReceived(chatPacket )), this, SLOT(forwardPacket(chatPacket )));
     connect(&clock,SIGNAL(timeout()),this,SLOT(clockedSender()));
-
     connect(&clockAck,SIGNAL(timeout()),this,SLOT(resendPack()));
-
+    userList.append("broadcast");
 }
 
 void chatProtocol::sendPacket(QByteArray packet)
@@ -160,9 +158,9 @@ void chatProtocol::receivePacket(chatPacket packet)
             emit usersUpdated(this->userList);
         }
         else if (packet.getPacketData().left(9)!= "CONNECTED" || packet.getPacketData().left(12)!= "NOTIFICATION") {
-            emit updateChat(packet.getPacketData());
+            if(packet.getDestinationName() == this->username) emit updateChatDirectMessage(packet.getPacketData());
+            else emit updateChat(packet.getPacketData());
         }
-
         if(packet.getDestinationName() == "broadcast") emit theirPacketReceived(packet);
         emit ourPacketReceived(packet.getPacketId(), packet.getSourceName());
         return;
@@ -196,6 +194,7 @@ void chatProtocol::connectToChat()
     this->commSocket.bind(QHostAddress::AnyIPv4, this->udpPort);
     connect(&commSocket,SIGNAL(readyRead()),this,SLOT(readIncomingDatagrams()));
     this->commSocket.joinMulticastGroup(groupAddress);
+    emit usersUpdated(this->userList);
 
     QString message("CONNECTED");
     message.append(QDateTime::currentDateTime().toString(Qt::ISODate));
@@ -226,6 +225,23 @@ void chatProtocol::enqueueMessage(QString message)
 
     packet.setAckUsers(userList); // give a list will all the current users to the packet, so the packet knows how many ack it should receive
     packet.setTimeOut(currentTimeOut); // set a current time to the packet, can be used to check for timeout
+    sendBuffer.push_back(packet);
+    sendLock.unlock();
+    this->sendPacket(packet.toByteArray());
+}
+
+void chatProtocol::enqueueDirectMessage(QString message, QString user)
+{
+    std::unique_lock<std::mutex> sendLock(this->sendMutex);
+    chatPacket packet;
+    packet.setSourceName(username);
+    packet.setDestinationName(user);
+    packet.setPacketData(message.toUtf8());
+    packet.makeHash();
+    QList<QString> users;\
+    users.append(user);
+    packet.setAckUsers(users);
+    packet.setTimeOut(currentTimeOut);
     sendBuffer.push_back(packet);
     sendLock.unlock();
     this->sendPacket(packet.toByteArray());
@@ -268,10 +284,10 @@ void chatProtocol::clockedSender()
         if (4 <= curCounter - userListTime[e]) { // after 2 minutes of no messages, delete user from userList
             for (int i = 0; i<userList.size(); i++) {
                 if (e==userList[i]) {
+                    if(userList.at(i) == "broadcast") continue;
                     emit updateChat(userList[i] + " has disconnected");
                     userList.erase(userList.begin()+i);
                     emit usersUpdated(this->userList); // update list
-
                 }
             }
         }
