@@ -156,6 +156,8 @@ void chatProtocol::receivePacket(chatPacket packet)
             emit updateChat(message);
             userList.removeAll(packet.getSourceName());
             emit usersUpdated(this->userList);
+            clock.stop(); // stop clockedSender
+            clockAck.stop(); // stop checking timeout of packets are overdue
         }
         else if (packet.getPacketData().left(9)!= "CONNECTED" && packet.getPacketData().left(12)!= "NOTIFICATION") {
             if(packet.getDestinationName() == this->username) emit updateChatDirectMessage(packet.getPacketData());
