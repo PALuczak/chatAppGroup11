@@ -86,6 +86,7 @@ chatProtocol::chatProtocol()
     clock.start(30000); // call clockedSender every 0.5 minute
     connect(&clockAck,SIGNAL(timeout()),this,SLOT(resendPack()));
     clockAck.start(1000); // check every sec if the timeout of packets are overdue
+    userList.append("broadcast");
 }
 
 void chatProtocol::sendPacket(QByteArray packet)
@@ -153,6 +154,7 @@ void chatProtocol::receivePacket(chatPacket packet)
             message.append(packet.getSourceName());
             message.append(" has connected");
             emit updateChat(message);
+            emit usersUpdated(this->userList);
         }
         else if(packet.getPacketData().left(12) == "DISCONNECTED") {
             QString message;
@@ -199,6 +201,7 @@ void chatProtocol::connectToChat()
     this->commSocket.bind(QHostAddress::AnyIPv4, this->udpPort);
     connect(&commSocket,SIGNAL(readyRead()),this,SLOT(readIncomingDatagrams()));
     this->commSocket.joinMulticastGroup(groupAddress);
+    emit usersUpdated(this->userList);
 
     QString message("CONNECTED");
     message.append(QDateTime::currentDateTime().toString(Qt::ISODate));
@@ -283,6 +286,7 @@ void chatProtocol::clockedSender()
         if (4 <= curCounter - userListTime[e]) { // after 2 minutes of no messages, delete user from userList
             for (int i = 0; i<userList.size(); i++) {
                 if (e==userList[i]) {
+                    if(userList.at(i) == "broadcast") continue;
                     userList.erase(userList.begin()+i);
                 }
             }
