@@ -1,5 +1,6 @@
 #include "chatprotocol.h"
 
+
 void chatProtocol::encryptPacket(QByteArray & packet)
 {
     // Initialize SimpleCrypt object with hexadecimal key = (0x)40b50fe120bbd01b
@@ -83,9 +84,9 @@ chatProtocol::chatProtocol()
     connect(this, SIGNAL(ourPacketReceived(QByteArray, QString)), this, SLOT(sendAck(QByteArray, QString)));
     connect(this, SIGNAL(theirPacketReceived(chatPacket )), this, SLOT(forwardPacket(chatPacket )));
     connect(&clock,SIGNAL(timeout()),this,SLOT(clockedSender()));
-    clock.start(30000); // call clockedSender every 0.5 minute
+
     connect(&clockAck,SIGNAL(timeout()),this,SLOT(resendPack()));
-    clockAck.start(1000); // check every sec if the timeout of packets are overdue
+
 }
 
 void chatProtocol::sendPacket(QByteArray packet)
@@ -93,6 +94,7 @@ void chatProtocol::sendPacket(QByteArray packet)
     encryptPacket(packet);
     this->commSocket.writeDatagram(packet.data(),packet.size(),this->groupAddress,this->udpPort);
 
+    std::cout<<"sending packet\n";
     // TODO: ensure relaibility --> i think we did this now
     // TODO: implement fragmentation is packet is too big --> we don do this anymore
 }
@@ -143,18 +145,13 @@ void chatProtocol::receivePacket(chatPacket packet)
             userList.append(packet.getSourceName());
             userListTime.insert(packet.getSourceName(), curCounter); // link user to current value timer, if timer is not update regularly, there is no connections, so this user is removed
             emit usersUpdated(this->userList);
+            emit updateChat(packet.getSourceName() + " has connected");
         }
-		  else {
+        else {
             userListTime.insert(packet.getSourceName(), curCounter); // update the time with the current time to keep track that this user is still online
         }
 
-        if(packet.getPacketData().left(9) == "CONNECTED") {
-            QString message;
-            message.append(packet.getSourceName());
-            message.append(" has connected");
-            emit updateChat(message);
-        }
-        else if(packet.getPacketData().left(12) == "DISCONNECTED") {
+        if(packet.getPacketData().left(12) == "DISCONNECTED") {
             QString message;
             message.append(packet.getSourceName());
             message.append(" has disconnected");
@@ -162,7 +159,9 @@ void chatProtocol::receivePacket(chatPacket packet)
             userList.removeAll(packet.getSourceName());
             emit usersUpdated(this->userList);
         }
-        else emit updateChat(packet.getPacketData());
+        else if (packet.getPacketData().left(9)!= "CONNECTED" || packet.getPacketData().left(12)!= "NOTIFICATION") {
+            emit updateChat(packet.getPacketData());
+        }
 
         if(packet.getDestinationName() == "broadcast") emit theirPacketReceived(packet);
         emit ourPacketReceived(packet.getPacketId(), packet.getSourceName());
@@ -202,6 +201,8 @@ void chatProtocol::connectToChat()
     message.append(QDateTime::currentDateTime().toString(Qt::ISODate));
 
     this->enqueueMessage(message);
+    clock.start(notificationTime); // call clockedSender every 10 second
+    clockAck.start(packetTimeout); // check every sec if the timeout of packets are overdue
 }
 
 void chatProtocol::disconnectFromChat()
@@ -237,8 +238,7 @@ void chatProtocol::sendAck(QByteArray ackN, QString source) {
     ackP.setDestinationName(source);
     ackP.setAckId(ackN);
     ackP.makeHash(); //id number
-    QByteArray ackPacket = ackP.toByteArray();
-    this->sendPacket(ackPacket);
+    this->sendPacket(ackP.toByteArray());
 }
 
 void chatProtocol::forwardPacket(chatPacket pkt) {
@@ -253,18 +253,25 @@ void chatProtocol::clockedSender()
 {
     // send message computer is still there
     chatPacket notification;
+    QString notif = "NOTIFICATION ";
+    notif.append(QDateTime::currentDateTime().toString(Qt::ISODate));
     notification.setSourceName(username);
+    notification.setPacketData(notif.toUtf8());
     notification.makeHash();
-    QByteArray notificationA = notification.toByteArray();
-    this->sendPacket(notificationA);
+    this->sendPacket(notification.toByteArray());
+
+    std::cout<<"send notification message\n";
 
     // check if users in userList are still connected to the network.
-    curCounter++; // every 0.5 minute increase
+    curCounter++; // every 5 second increase
     for (auto e : userListTime.keys()) {
         if (4 <= curCounter - userListTime[e]) { // after 2 minutes of no messages, delete user from userList
             for (int i = 0; i<userList.size(); i++) {
                 if (e==userList[i]) {
+                    emit updateChat(userList[i] + " has disconnected");
                     userList.erase(userList.begin()+i);
+                    emit usersUpdated(this->userList); // update list
+
                 }
             }
         }

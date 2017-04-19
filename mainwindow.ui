@@ -123,9 +123,9 @@
    <widget class="QLineEdit" name="nameLine">
     <property name="geometry">
      <rect>
-      <x>390</x>
+      <x>410</x>
       <y>0</y>
-      <width>251</width>
+      <width>231</width>
       <height>26</height>
      </rect>
     </property>
@@ -139,9 +139,9 @@
    <widget class="QLineEdit" name="keyLine">
     <property name="geometry">
      <rect>
-      <x>220</x>
+      <x>210</x>
       <y>0</y>
-      <width>161</width>
+      <width>191</width>
       <height>26</height>
      </rect>
     </property>

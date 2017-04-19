@@ -11,6 +11,7 @@
 #include <QTimer>
 #include <QDateTime>
 #include <QVector>
+#include <iostream>
 
 #include <mutex>
 
@@ -32,6 +33,7 @@ private:
     std::mutex sendMutex;
 
     const unsigned int packetTimeout = 1000; // milliseconds
+    const unsigned int notificationTime = 10000; // milliseconds
     QTimer clock;
     QTimer clockAck;
 
