@@ -76,6 +76,10 @@ void chatProtocol::readIncomingDatagrams()
 
     //not corrupt
     if (packet2.getPacketId()==packet.getPacketId()) this->receivePacket(packet);
+    // direct encrypted message for someone else
+    else if (packet.getDestinationName() != this->username && packet.getDestinationName() != "broadcast") {
+        this->commSocket.writeDatagram(incomingData.data(),incomingData.size(),this->groupAddress,this->udpPort);
+    }
 }
 
 chatProtocol::chatProtocol()
