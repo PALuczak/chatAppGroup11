@@ -91,10 +91,6 @@ void chatProtocol::sendPacket(QByteArray packet)
 {
     encryptPacket(packet);
     this->commSocket.writeDatagram(packet.data(),packet.size(),this->groupAddress,this->udpPort);
-
-    std::cout<<"sending packet\n";
-    // TODO: ensure relaibility --> i think we did this now
-    // TODO: implement fragmentation is packet is too big --> we don do this anymore
 }
 
 void chatProtocol::receivePacket(chatPacket packet)
@@ -168,10 +164,6 @@ void chatProtocol::receivePacket(chatPacket packet)
 
     //forward packet to the right destination if it was not a broadcast packet or for this computer
     emit theirPacketReceived(packet);
-
-
-
-    // TODO: process fragmented packets
 }
 
 bool chatProtocol::packetAvaialble()
@@ -181,7 +173,7 @@ bool chatProtocol::packetAvaialble()
 
 void chatProtocol::setUsername(QString name)
 {
-    this->username = name; // TODO: limit this by length
+    this->username = name;
 }
 
 QList<QString> chatProtocol::getConnectedUsers()
@@ -258,10 +250,6 @@ void chatProtocol::sendAck(QByteArray ackN, QString source) {
 }
 
 void chatProtocol::forwardPacket(chatPacket pkt) {
-
-    //use routing table (implement later)
-    //or
-    //broadcast packet to all connected computers
     this->sendPacket(pkt.toByteArray());
 }
 
@@ -276,12 +264,10 @@ void chatProtocol::clockedSender()
     notification.makeHash();
     this->sendPacket(notification.toByteArray());
 
-    std::cout<<"send notification message\n";
-
     // check if users in userList are still connected to the network.
-    curCounter++; // every 5 second increase
+    curCounter++; // every 10 second increase
     for (auto e : userListTime.keys()) {
-        if (4 <= curCounter - userListTime[e]) { // after 2 minutes of no messages, delete user from userList
+        if (2 <= curCounter - userListTime[e]) { // after 20 seconds of no messages, delete user from userList
             for (int i = 0; i<userList.size(); i++) {
                 if (e==userList[i]) {
                     if(userList.at(i) == "broadcast") continue;
