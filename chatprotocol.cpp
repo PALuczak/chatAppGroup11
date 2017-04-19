@@ -157,7 +157,7 @@ void chatProtocol::receivePacket(chatPacket packet)
             userList.removeAll(packet.getSourceName());
             emit usersUpdated(this->userList);
         }
-        else if (packet.getPacketData().left(9)!= "CONNECTED" || packet.getPacketData().left(12)!= "NOTIFICATION") {
+        else if (packet.getPacketData().left(9)!= "CONNECTED" && packet.getPacketData().left(12)!= "NOTIFICATION") {
             if(packet.getDestinationName() == this->username) emit updateChatDirectMessage(packet.getPacketData());
             else emit updateChat(packet.getPacketData());
         }
